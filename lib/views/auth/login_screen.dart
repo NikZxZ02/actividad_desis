@@ -1,8 +1,14 @@
+import 'dart:convert';
+
 import 'package:actividad_desis/db/database.dart';
+import 'package:actividad_desis/providers/auth_provider.dart';
 import 'package:actividad_desis/views/main/main_screen.dart';
+import 'package:actividad_desis/views/register/register_screen.dart';
 import 'package:actividad_desis/views/register/widgets/custom_button.dart';
 import 'package:actividad_desis/widgets/message_status.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +22,7 @@ class LoginScreenState extends State<LoginScreen> {
   final _passController = TextEditingController();
   bool isVisible = true;
   DBSqlite database = DBSqlite();
+  final storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -23,11 +30,18 @@ class LoginScreenState extends State<LoginScreen> {
   }
 
   void logIn() async {
+    final authUser = Provider.of<AuthProvider>(context, listen: false);
     final user =
         await database.getUser(_emailController.text, _passController.text);
+    final userJson = {
+      "email": _emailController.text,
+      "password": _passController.text
+    };
     if (user != null) {
+      authUser.setUser(user);
+      storage.write(key: "userdata", value: jsonEncode(userJson));
       if (mounted) {
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) {
@@ -100,6 +114,20 @@ class LoginScreenState extends State<LoginScreen> {
                   logIn();
                 },
                 label: "Ingresar",
+                width: MediaQuery.of(context).size.width,
+                color: const Color(0xFF1A90D9),
+              ),
+              CustomButton(
+                onPress: () {
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (context) {
+                      return const RegisterScreen(
+                        newUser: true,
+                      );
+                    },
+                  ));
+                },
+                label: "Registrarse",
                 width: MediaQuery.of(context).size.width,
                 color: const Color(0xFF1A90D9),
               )

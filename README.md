@@ -31,3 +31,9 @@ Se trabajo con las siguientes tecnologias
    ```
    flutter run
    ```
+
+## Descarga
+
+La APK de la aplicación puede ser encontrada en la opción Release de este repositorio
+
+Desarrollado por **Nicolás Hidalgo**

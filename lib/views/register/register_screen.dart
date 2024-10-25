@@ -1,6 +1,9 @@
+import 'dart:developer';
+
 import 'package:actividad_desis/db/database.dart';
 import 'package:actividad_desis/models/user.dart';
 import 'package:actividad_desis/services/user_service.dart';
+import 'package:actividad_desis/views/auth/login_screen.dart';
 import 'package:actividad_desis/views/register/widgets/custom_button.dart';
 import 'package:actividad_desis/views/register/widgets/custom_texfield.dart';
 import 'package:actividad_desis/widgets/custom_drawer.dart';
@@ -10,7 +13,8 @@ import 'package:intl/intl.dart';
 import 'package:actividad_desis/validators/form_validators.dart' as validators;
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final bool newUser;
+  const RegisterScreen({super.key, required this.newUser});
 
   @override
   State<RegisterScreen> createState() => RegisterScreenState();
@@ -70,6 +74,7 @@ class RegisterScreenState extends State<RegisterScreen> {
   }
 
   void handleRegister() async {
+    final location = await userService.getLocation(_addressController.text);
     User user = User(
       name: _nameController.text,
       email: _emailController.text,
@@ -77,16 +82,34 @@ class RegisterScreenState extends State<RegisterScreen> {
       address: _addressController.text,
       password: _passwordController.text,
       phoneNumber: _phoneNumber.text,
+      coordinates: [location["lat"], location["lon"]],
     );
     database.insertUser(user);
-    MessagesStatus.showStatusMessage(
-        context, "Usuario registrado con exito", false);
+    if (mounted) {
+      MessagesStatus.showStatusMessage(
+          context, "Usuario registrado con exito", false);
+    }
     _nameController.clear();
     _emailController.clear();
     _dateController.clear();
     _addressController.clear();
     _phoneNumber.clear();
     _passwordController.clear();
+
+    if (widget.newUser) {
+      if (mounted) {
+        Navigator.pushReplacement(context, MaterialPageRoute(
+          builder: (context) {
+            return const LoginScreen();
+          },
+        ));
+      }
+    }
+  }
+
+  void handleGetLocation() async {
+    final location = await userService.getLocation(_addressController.text);
+    log(location["lat"].toString());
   }
 
   @override
@@ -101,9 +124,11 @@ class RegisterScreenState extends State<RegisterScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: const Color(0xFF1A90D9),
       ),
-      drawer: const CustomDrawer(
-        isHome: false,
-      ),
+      drawer: widget.newUser
+          ? null
+          : const CustomDrawer(
+              isHome: false,
+            ),
       body: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -152,18 +177,20 @@ class RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(
                 height: 5,
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                child: CustomButton(
-                  onPress: () {
-                    handleGetUser();
-                  },
-                  label: "Obtener desde API",
-                  width: MediaQuery.of(context).size.width,
-                  isLoading: isLoading,
-                  isDisabled: isLoading,
-                ),
-              ),
+              widget.newUser
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      child: CustomButton(
+                        onPress: () {
+                          handleGetUser();
+                        },
+                        label: "Obtener desde API",
+                        width: MediaQuery.of(context).size.width,
+                        isLoading: isLoading,
+                        isDisabled: isLoading,
+                      ),
+                    ),
             ],
           ),
         ),

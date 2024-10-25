@@ -1,10 +1,14 @@
 import 'package:actividad_desis/db/database.dart';
 import 'package:actividad_desis/models/user.dart';
+import 'package:actividad_desis/services/user_service.dart';
 import 'package:actividad_desis/views/list/list_screen.dart';
 import 'package:actividad_desis/views/list/widgets/user_detail_data.dart';
+import 'package:actividad_desis/views/list/widgets/weather_card.dart';
 import 'package:actividad_desis/views/register/widgets/custom_button.dart';
 import 'package:actividad_desis/widgets/message_status.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class UserDetails extends StatefulWidget {
   final User user;
@@ -17,15 +21,28 @@ class UserDetails extends StatefulWidget {
 class _UserDetailsState extends State<UserDetails> {
   DBSqlite database = DBSqlite();
   bool isLoading = false;
+  final userService = UserService();
+  Map<String, dynamic> weather = {};
 
   @override
   void initState() {
+    getWeatherUserCountry();
     super.initState();
   }
 
   void setIsLoading(bool loading) {
     setState(() {
       isLoading = loading;
+    });
+  }
+
+  void getWeatherUserCountry() async {
+    setIsLoading(true);
+    final weahterData = await userService.getWeather(
+        widget.user.coordinates.first, widget.user.coordinates.last);
+    setState(() {
+      weather = weahterData;
+      isLoading = false;
     });
   }
 
@@ -61,9 +78,13 @@ class _UserDetailsState extends State<UserDetails> {
         backgroundColor: const Color(0xFF1A90D9),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 35.0, vertical: 55),
+        padding: const EdgeInsets.symmetric(horizontal: 35.0, vertical: 45),
         child: Column(
           children: [
+            WeatherCard(
+              weather: weather,
+              isLoading: isLoading,
+            ),
             UserDetailData(
               label: "Nombre:",
               data: widget.user.name,
@@ -88,6 +109,10 @@ class _UserDetailsState extends State<UserDetails> {
               label: "Contraseña:",
               data: widget.user.password,
             ),
+            UserDetailData(
+              label: "lat:",
+              data: widget.user.coordinates.first.toString(),
+            ),
             const SizedBox(
               height: 55,
             ),
@@ -101,6 +126,39 @@ class _UserDetailsState extends State<UserDetails> {
               color: Colors.red[400]!,
               isDisabled: isLoading,
               isLoading: isLoading,
+            ),
+            Expanded(
+              child: FlutterMap(
+                options: MapOptions(
+                  onTap: (tapPosition, point) {
+                    _showMap(context);
+                  },
+                  initialCenter: LatLng(
+                    widget.user.coordinates.first,
+                    widget.user.coordinates.last,
+                  ),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.actividad_desis.app',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: LatLng(
+                          widget.user.coordinates.first,
+                          widget.user.coordinates.last,
+                        ),
+                        width: 80,
+                        height: 80,
+                        child: const Icon(Icons.location_on),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             )
           ],
         ),
@@ -158,6 +216,48 @@ class _UserDetailsState extends State<UserDetails> {
             )
           ],
           actionsAlignment: MainAxisAlignment.center,
+        );
+      },
+    );
+  }
+
+  void _showMap(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.transparent,
+          content: SizedBox(
+            width: 350,
+            height: 450,
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: LatLng(
+                  widget.user.coordinates.first,
+                  widget.user.coordinates.last,
+                ),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.actividad_desis.app',
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: LatLng(
+                        widget.user.coordinates.first,
+                        widget.user.coordinates.last,
+                      ),
+                      width: 80,
+                      height: 80,
+                      child: const Icon(Icons.location_on),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

@@ -29,7 +29,8 @@ class MainScreen extends StatelessWidget {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const RegisterScreen()));
+                      builder: (context) =>
+                          const RegisterScreen(newUser: false)));
             },
             label: "Creación Cuenta",
             color: const Color(0xFF52C5F2),

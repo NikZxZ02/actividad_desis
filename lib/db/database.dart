@@ -37,7 +37,9 @@ class DBSqlite {
         email TEXT,phoneNumber TEXT,
         birthDate TEXT,
         address TEXT,
-        password TEXT
+        password TEXT,
+        latitude REAL,
+        longitude REAL 
       )
     ''');
   }
@@ -56,7 +58,7 @@ class DBSqlite {
     }
   }
 
-  Future<Map<String, Object?>?> getUser(String email, String password) async {
+  Future<User?> getUser(String email, String password) async {
     final db = await database;
     final user = await db.query(
       'users',
@@ -65,7 +67,7 @@ class DBSqlite {
     );
 
     if (user.isNotEmpty) {
-      return user.first;
+      return User.fromMap(user.first);
     } else {
       return null;
     }
@@ -84,6 +86,10 @@ class DBSqlite {
         birthDate: maps[i]['birthDate'],
         address: maps[i]['address'],
         password: maps[i]['password'],
+        coordinates: [
+          maps[i]['latitude'],
+          maps[i]['longitude'],
+        ],
       );
     });
   }
