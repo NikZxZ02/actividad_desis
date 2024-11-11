@@ -24,6 +24,7 @@ class RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordConfirmController = TextEditingController();
   final _addressController = TextEditingController();
   final _dateController = TextEditingController();
   final _phoneNumber = TextEditingController();
@@ -42,6 +43,7 @@ class RegisterScreenState extends State<RegisterScreen> {
     _addressController.addListener(checkIfForm);
     _dateController.addListener(checkIfForm);
     _phoneNumber.addListener(checkIfForm);
+    _passwordConfirmController.addListener(checkIfForm);
   }
 
   void setIsLoading(bool loading) {
@@ -52,12 +54,15 @@ class RegisterScreenState extends State<RegisterScreen> {
 
   void checkIfForm() {
     setState(() {
-      isValid = _nameController.text.isNotEmpty &&
+      bool isEmptyInputs = _nameController.text.isNotEmpty &&
           _emailController.text.isNotEmpty &&
           _passwordController.text.isNotEmpty &&
           _addressController.text.isNotEmpty &&
           _dateController.text.isNotEmpty &&
           _phoneNumber.text.isNotEmpty;
+      isValid = widget.newUser
+          ? isEmptyInputs && _passwordConfirmController.text.isNotEmpty
+          : isEmptyInputs;
     });
   }
 
@@ -160,6 +165,14 @@ class RegisterScreenState extends State<RegisterScreen> {
                   controller: _passwordController,
                   label: "Contraseña",
                   validator: validators.passwordValidator),
+              widget.newUser
+                  ? CustomTextFormField(
+                      controller: _passwordConfirmController,
+                      label: "Confirmar Contraseña",
+                      validator: (value) => validators.confirmPasswordValidator(
+                          value, _passwordController.text),
+                    )
+                  : const SizedBox.shrink(),
               const SizedBox(height: 30),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10.0),

@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:actividad_desis/models/product.dart';
 import 'package:actividad_desis/models/user.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -42,11 +43,26 @@ class DBSqlite {
         longitude REAL 
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT NOT NULL,
+        description TEXT NOT NULL,
+        unitPrice TEXT NOT NULL,
+        active INTEGER NOT NULL
+     )
+    ''');
   }
 
   Future<int> insertUser(User user) async {
     final db = await database;
     return await db.insert('users', user.toJson());
+  }
+
+  Future<int> insertProduct(Product product) async {
+    final db = await database;
+    return await db.insert('products', product.toJson());
   }
 
   Future<void> deleteUser(int userId) async {
@@ -71,6 +87,41 @@ class DBSqlite {
     } else {
       return null;
     }
+  }
+
+  Future<List<Product>> getProducts(String? code, String? description) async {
+    final db = await database;
+    String whereClause = '';
+    List<String> whereArgs = [];
+
+    if (code != null && code.isNotEmpty) {
+      whereClause += 'code LIKE ?';
+      whereArgs.add('%$code%');
+    }
+
+    if (description != null && description.isNotEmpty) {
+      if (whereClause.isNotEmpty) {
+        whereClause += ' OR ';
+      }
+      whereClause += 'description LIKE ?';
+      whereArgs.add('%$description%');
+    }
+
+    final List<Map<String, dynamic>> products = await db.query(
+      'products',
+      where: whereClause.isNotEmpty ? whereClause : null,
+      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+    );
+
+    return List.generate(products.length, (i) {
+      return Product(
+        id: products[i]['id'],
+        code: products[i]['code'],
+        description: products[i]['description'],
+        unitPrice: products[i]['unitPrice'],
+        active: products[i]['active'],
+      );
+    });
   }
 
   Future<List<User>> getUsers() async {

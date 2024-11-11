@@ -54,6 +54,13 @@ String? passwordValidator(String? value) {
   return null;
 }
 
+String? confirmPasswordValidator(String? value, String password) {
+  if (value != null && value != password) {
+    return 'Debe coincidir con su contraseña';
+  }
+  return null;
+}
+
 String? phoneNumberValidator(String? value) {
   if (value!.length < 10 || value.length > 15) {
     return 'N° Teléfono debe tener entre 10 y 15 caracteres';

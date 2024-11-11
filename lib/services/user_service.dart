@@ -1,12 +1,14 @@
 import 'dart:developer';
 
 import 'package:actividad_desis/models/user.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class UserService {
   final String apiUrl = "https://randomuser.me/api/";
-  final String apiKey = "API_KEY";
+  final String apiKey =
+      dotenv.get('API_WEATHER', fallback: 'URL env is required');
 
   Future<User?> fetchUser() async {
     final response = await http.get(Uri.parse(apiUrl));
