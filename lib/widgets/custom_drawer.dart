@@ -2,7 +2,9 @@ import 'package:actividad_desis/providers/auth_provider.dart';
 import 'package:actividad_desis/views/auth/login_screen.dart';
 import 'package:actividad_desis/views/list/list_screen.dart';
 import 'package:actividad_desis/views/main/main_screen.dart';
+import 'package:actividad_desis/views/product/create_product_screen.dart';
 import 'package:actividad_desis/views/register/register_screen.dart';
+import 'package:actividad_desis/views/sales_slip/sales_slip_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -87,6 +89,32 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => const UserListScreen()));
+            },
+            trailing: const Icon(Icons.arrow_forward_ios),
+          ),
+          ListTile(
+            title: const Text(
+              'Boleta Express',
+              style: TextStyle(fontSize: 15),
+            ),
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const SaleSlipScreen()));
+            },
+            trailing: const Icon(Icons.arrow_forward_ios),
+          ),
+          ListTile(
+            title: const Text(
+              'Crear Producto',
+              style: TextStyle(fontSize: 15),
+            ),
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const CreateProductScreen()));
             },
             trailing: const Icon(Icons.arrow_forward_ios),
           ),
