@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:actividad_desis/models/product.dart';
+import 'package:actividad_desis/models/sale_slip.dart';
 import 'package:actividad_desis/models/user.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -53,6 +54,18 @@ class DBSqlite {
         active INTEGER NOT NULL
      )
     ''');
+
+    await db.execute('''
+      CREATE TABLE sale_slips (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        folio INTEGER NOT NULL,
+        rut TEXT NOT NULL,
+        totalAmount INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        datetime TEXT NOT NULL,
+        sale_slip BLOB NOT NULL
+    );
+    ''');
   }
 
   Future<int> insertUser(User user) async {
@@ -63,6 +76,11 @@ class DBSqlite {
   Future<int> insertProduct(Product product) async {
     final db = await database;
     return await db.insert('products', product.toJson());
+  }
+
+  Future<int> insertSaleSlip(SaleSlip saleSlip) async {
+    final db = await database;
+    return await db.insert('sale_slips', saleSlip.toJson());
   }
 
   Future<void> deleteUser(int userId) async {
@@ -141,6 +159,23 @@ class DBSqlite {
           maps[i]['latitude'],
           maps[i]['longitude'],
         ],
+      );
+    });
+  }
+
+  Future<List<SaleSlip>> getSaleSlips() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('sale_slips');
+
+    return List.generate(maps.length, (i) {
+      return SaleSlip(
+        id: maps[i]['id'],
+        folio: maps[i]['folio'],
+        rut: maps[i]['rut'],
+        totalAmount: maps[i]['totalAmount'],
+        date: maps[i]['date'],
+        datetime: maps[i]['datetime'],
+        saleSlip: maps[i]['sale_slip'],
       );
     });
   }

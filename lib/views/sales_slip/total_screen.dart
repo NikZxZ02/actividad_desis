@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'dart:math';
+import 'package:actividad_desis/db/database.dart';
+import 'package:actividad_desis/models/sale_slip.dart';
 import 'package:actividad_desis/providers/auth_provider.dart';
 import 'package:actividad_desis/providers/product_provider.dart';
 import 'package:actividad_desis/services/email_services.dart';
@@ -9,6 +13,8 @@ import 'package:actividad_desis/views/sales_slip/widgets/pdf_viewer.dart';
 import 'package:actividad_desis/views/sales_slip/widgets/sale_slip_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
 
 class TotalScreen extends StatefulWidget {
   const TotalScreen({super.key});
@@ -23,8 +29,8 @@ class _TotalScreenState extends State<TotalScreen> {
   bool autoFocus = false;
   bool isReadOnly = false;
   final emailService = EmailServices();
-  int folio = 1450;
   bool isLoading = false;
+  DBSqlite db = DBSqlite();
 
   @override
   void didChangeDependencies() {
@@ -46,7 +52,7 @@ class _TotalScreenState extends State<TotalScreen> {
         Provider.of<ProductProvider>(context, listen: false);
     try {
       final pdfPreview = await PdfSalesSlipCreate.generate(
-          productsProvider.products, productsProvider.totalAmount, folio);
+          productsProvider.products, productsProvider.totalAmount, null);
 
       if (mounted) {
         Navigator.of(context).pop();
@@ -65,33 +71,44 @@ class _TotalScreenState extends State<TotalScreen> {
       if (mounted) {
         Navigator.of(context).pop();
       }
-      print("Error al realizar la vista previa");
     }
   }
 
-  void sendEmail() async {
+  int _generateFolio() {
+    return 1 + Random().nextInt(1000);
+  }
+
+  //TODO: Refactorizar el codigo
+  void _printSaleSlip() async {
     setIsloading();
+    final folio = _generateFolio();
     final productsProvider =
         Provider.of<ProductProvider>(context, listen: false);
     final rutProvider = Provider.of<AuthProvider>(context, listen: false);
+
     final pdfPreview = await PdfSalesSlipCreate.generate(
         productsProvider.products, productsProvider.totalAmount, folio);
+
+    final now = DateTime.now();
+    final nowDate = getLocalDate(now);
+
+    final saleSlip = SaleSlip(
+        folio: folio,
+        rut: _rutController.text.isNotEmpty ? _rutController.text : '6666666-6',
+        totalAmount: (productsProvider.totalAmount +
+                (productsProvider.totalAmount * 0.19))
+            .toInt(),
+        saleSlip: pdfPreview.readAsBytesSync(),
+        date: nowDate.toIso8601String().split('T').first,
+        datetime: nowDate.toString());
 
     if (isReadOnly) {
       final status = await emailService.sendDocumentEmail(
           _emailController.text, pdfPreview);
       setIsloading();
-      if (mounted && status == 200) {
-        Navigator.pop(context);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FinishedScreen(
-              folio: folio,
-              pdf: pdfPreview,
-            ),
-          ),
-        );
+      if (status == 200) {
+        db.insertSaleSlip(saleSlip);
+        _moveToNextPage(folio, pdfPreview);
         productsProvider.removeAllProductList();
         rutProvider.setRut('');
       } else {
@@ -106,21 +123,30 @@ class _TotalScreenState extends State<TotalScreen> {
       }
     } else {
       setIsloading();
-      if (mounted) {
-        Navigator.pop(context);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FinishedScreen(
-              folio: folio,
-              pdf: pdfPreview,
-            ),
-          ),
-        );
-
-        productsProvider.removeAllProductList();
-      }
+      db.insertSaleSlip(saleSlip);
+      _moveToNextPage(folio, pdfPreview);
+      productsProvider.removeAllProductList();
     }
+  }
+
+  void _moveToNextPage(int folio, File pdfPreview) {
+    Navigator.pop(context);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FinishedScreen(
+          folio: folio,
+          pdf: pdfPreview,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _rutController.dispose();
+    _emailController.dispose();
+    super.dispose();
   }
 
   @override
@@ -163,7 +189,7 @@ class _TotalScreenState extends State<TotalScreen> {
                           value: isReadOnly,
                           onChanged: (value) {
                             setState(() {
-                              isReadOnly = !isReadOnly;
+                              isReadOnly = value;
                             });
                           },
                         )
@@ -208,7 +234,7 @@ class _TotalScreenState extends State<TotalScreen> {
                   CustomButton(
                     onPress: () {
                       _showAlert(context, false);
-                      sendEmail();
+                      _printSaleSlip();
                     },
                     label: "Emitir ",
                     width: MediaQuery.of(context).size.width,
@@ -245,4 +271,11 @@ void _showAlert(BuildContext context, bool isPreview) async {
       );
     },
   );
+}
+
+DateTime getLocalDate(DateTime date) {
+  tz.initializeTimeZones();
+  var location = tz.getLocation('America/Santiago');
+
+  return tz.TZDateTime.from(date, location);
 }

@@ -137,7 +137,6 @@ class PdfSalesSlipCreate {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 0.8 * PdfPageFormat.cm),
             Container(
               child: Row(
                 children: [
@@ -147,14 +146,15 @@ class PdfSalesSlipCreate {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  Text(
-                    "APP_FACTURACION",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  Expanded(
+                    child: Text(
+                      "APP_FACTURACION",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  )
                 ],
               ),
             ),
-            SizedBox(height: 0.8 * PdfPageFormat.cm),
           ],
         ),
       );

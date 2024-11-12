@@ -1,6 +1,7 @@
 import 'package:actividad_desis/views/list/list_screen.dart';
 import 'package:actividad_desis/views/main/widgets/custom_card.dart';
 import 'package:actividad_desis/views/register/register_screen.dart';
+import 'package:actividad_desis/views/sales_book/sales_book_screen.dart';
 import 'package:actividad_desis/views/sales_slip/sales_slip_screen.dart';
 import 'package:actividad_desis/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
@@ -55,6 +56,16 @@ class MainScreen extends StatelessWidget {
             },
             label: "Boleta Express",
             color: const Color(0xFF220080),
+          ),
+          CustomCard(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const SalesBookScreen()));
+            },
+            label: "Libro de Ventas",
+            color: const Color(0xFF52C5F2),
           ),
         ],
       ),
